@@ -1,37 +1,12 @@
 /*
 ===============================================================================
-HotelDB - Optimización de consultas con índices, vistas indexadas y funciones
-ventana (VERSIÓN 2)
+HotelDB - Optimización de consultas con índices, vistas indexadas y funciones ventana
 -------------------------------------------------------------------------------
-QUÉ CAMBIA RESPECTO A LA VERSIÓN ANTERIOR
-  1) Se prueba con volumen (ver 00_carga_sintetica_HotelDB.sql). Con ~190
-     facturas todo cabe en unas decenas de páginas y ningún índice se nota.
-  2) Las 3 vistas de la sección A NO cambian (la línea base sigue siendo la misma).
-  3) Índices de tablas base corregidos:
-       - detalle_factura NO tenía índice por id_factura (columna de FK).
-       - IX_detfac_habitacion se estrechó (solo precio_total) y se agregó
-         IX_detfac_factura para el camino factura -> líneas.
-  4) NUEVO: 3 vistas indexadas (agregados precalculados). Son la mejora grande:
-     convierten "leer todas las líneas para devolver pocas filas" en
-     "leer filas ya agregadas". Las vistas de la sección A las usan solas
-     (Developer/Enterprise); en Standard hay que consultar la vista indexada
-     con WITH (NOEXPAND).
-  5) NUEVO: función con rango de fechas para la variación mensual. Un filtro
-     por "mes" sobre la vista se aplica DESPUÉS del LAG, así que SQL Server no
-     puede empujarlo hasta factura. La función filtra ANTES de la ventana.
 
 ORDEN DE EJECUCIÓN
-  0) (Recomendado) cargar volumen con 00_carga_sintetica_HotelDB.sql
-  A) crear las vistas -> B) mediciones BASE -> C) índices -> D) mediciones DESPUÉS
+  1) cargar volumen con 00_carga_sintetica_HotelDB.sql
+  2) A. crear las vistas -> B. mediciones BASE -> C. índices 
 
-IMPORTANTE (vistas indexadas e índices filtrados):
-  - Las sesiones que modifican factura/detalle_factura necesitan
-    QUOTED_IDENTIFIER ON, ANSI_NULLS ON, ANSI_PADDING ON, ANSI_WARNINGS ON,
-    ARITHABORT ON, CONCAT_NULL_YIELDS_NULL ON y NUMERIC_ROUNDABORT OFF.
-    SSMS y los drivers modernos ya lo hacen; sqlcmd necesita la opción -I.
-    Si un INSERT/UPDATE falla con el error 1934, es por esto.
-  - SCHEMABINDING impide alterar/borrar las columnas que usan las vistas
-    indexadas mientras existan.
 ===============================================================================
 */
 USE HotelDB;
@@ -170,13 +145,9 @@ GO
 
 /* ===========================================================================
 B. PRUEBA BASE: EJECUTAR ANTES DE LA SECCIÓN C
-Consejos para que la comparación sea limpia:
   - Ctrl+M (plan real) y, en SSMS, Query > Query Options > Results > "Discard
     results after execution": así el tiempo no incluye pintar filas en pantalla.
   - Compara sobre todo LECTURAS LÓGICAS (son estables); el tiempo varía.
-  - Ejecuta cada consulta 3 veces y anota la 2.ª y 3.ª (caché caliente).
-  - Opcional, en cold cache (solo en un servidor de pruebas):
-        CHECKPOINT; DBCC DROPCLEANBUFFERS;
 =========================================================================== */
 SET NOCOUNT ON;
 SET STATISTICS IO ON;
@@ -212,8 +183,6 @@ C. ÍNDICES DE SOPORTE (ejecutar DESPUÉS de guardar las mediciones base)
 C1. Índices en tablas base
 --------------------------------------------------------------------------- */
 
-/* Camino huésped -> total. Cubre el GROUP BY id_huesped (ya viene ordenado,
-   evita hash/sort). También sirve a la FK factura.id_huesped. */
 IF EXISTS (SELECT 1 FROM sys.indexes
            WHERE name = 'IX_factura_huesped'
              AND object_id = OBJECT_ID('facturacion.factura'))
@@ -224,8 +193,7 @@ CREATE NONCLUSTERED INDEX IX_factura_huesped
     INCLUDE (total_a_pagar);
 GO
 
-/* Rango de fechas. Solo da SEEK si el filtro llega a factura: lo logra la
-   función fn_variacion_mensual_ingresos_hotel (sección D), NO la vista. */
+
 IF EXISTS (SELECT 1 FROM sys.indexes
            WHERE name = 'IX_factura_fecha'
              AND object_id = OBJECT_ID('facturacion.factura'))
@@ -236,8 +204,7 @@ CREATE NONCLUSTERED INDEX IX_factura_fecha
     INCLUDE (total_a_pagar);
 GO
 
-/* Camino habitación -> líneas (ingresos por habitación). Más estrecho que la
-   versión anterior: solo lo que la consulta necesita (precio_total). */
+
 IF EXISTS (SELECT 1 FROM sys.indexes
            WHERE name = 'IX_detfac_habitacion'
              AND object_id = OBJECT_ID('facturacion.detalle_factura'))
@@ -249,8 +216,7 @@ CREATE NONCLUSTERED INDEX IX_detfac_habitacion
     WHERE id_habitacion IS NOT NULL;
 GO
 
-/* Camino factura -> líneas. FALTABA: id_factura es columna de FK y no tenía
-   índice, así que no se podía ir de una factura a sus líneas con un seek. */
+
 IF EXISTS (SELECT 1 FROM sys.indexes
            WHERE name = 'IX_detfac_factura'
              AND object_id = OBJECT_ID('facturacion.detalle_factura'))
@@ -265,7 +231,6 @@ GO
 /* ---------------------------------------------------------------------------
 C2. VISTAS INDEXADAS (agregados precalculados): la mejora de fondo.
     Cada una replica EXACTAMENTE la agregación de una vista de la sección A
-    (mismos joins, mismo WHERE, mismo GROUP BY). COUNT_BIG(*) es obligatorio.
 --------------------------------------------------------------------------- */
 IF OBJECT_ID('facturacion.ivw_gasto_huesped', 'V') IS NOT NULL
     DROP VIEW facturacion.ivw_gasto_huesped;
@@ -340,14 +305,8 @@ GO
 
 /* ---------------------------------------------------------------------------
 C3. Verificar que el optimizador usa las vistas indexadas
-    Mira el plan real: debe aparecer ivw_gasto_huesped / ivw_monto_hotel_factura /
+    Debe aparecer ivw_gasto_huesped / ivw_monto_hotel_factura /
     ivw_ingreso_habitacion en vez de detalle_factura/factura.
-    Si NO aparecen (p. ej. edición Standard) consulta la vista indexada
-    directamente con WITH (NOEXPAND), por ejemplo:
-        SELECT * FROM facturacion.ivw_ingreso_habitacion WITH (NOEXPAND);
-    Para ver el plan SIN vistas indexadas en la misma base (comparación justa
-    con los mismos datos), agrega al final de la consulta:
-        OPTION (EXPAND VIEWS);
 --------------------------------------------------------------------------- */
 
 /* ===========================================================================
@@ -357,9 +316,8 @@ D. FUNCIÓN CON RANGO DE FECHAS (variación mensual) -- para la consulta 2
    Incluye 1 mes antes de @desde para que el LAG del primer mes tenga con qué
    comparar. @desde y @hasta se interpretan por mes: devuelve los meses desde
    el mes de @desde hasta el mes anterior a @hasta (@hasta es exclusivo).
-   Diferencia mínima con la vista: si un hotel no tuviera facturas en el mes
-   previo a @desde, la vista compararía contra un mes más antiguo y la función
-   mostraría NULL en ese primer mes.
+   Si un hotel no tiene facturas en el previo a @desde, la vista compararía contra un
+   mes más antiguo y la función dará NULL en ese primer mes.
 =========================================================================== */
 IF OBJECT_ID('facturacion.fn_variacion_mensual_ingresos_hotel', 'IF') IS NOT NULL
     DROP FUNCTION facturacion.fn_variacion_mensual_ingresos_hotel;
@@ -468,26 +426,8 @@ EXCEPT
 SELECT * FROM facturacion.fn_variacion_mensual_ingresos_hotel('2026-03-01', '2026-06-01');
 GO
 
-/* ===========================================================================
-Notas para el informe
- - Reporta lecturas lógicas, CPU, tiempo y plan real ANTES/DESPUÉS con el mismo
-   volumen de datos. Con los datos originales (~190 facturas) la diferencia es
-   mínima; con la carga sintética se ve claramente. Eso también es un hallazgo:
-   los índices rinden cuando el volumen los justifica.
- - Las vistas normales no almacenan datos; las vistas INDEXADAS sí (ocupan
-   espacio) y se actualizan en cada INSERT/UPDATE/DELETE de las tablas base.
-   Ese es el costo: más escritura a cambio de lecturas mucho más baratas.
- - En una tabla con muchas escrituras concurrentes sobre pocos huéspedes u
-   habitaciones, el agregado puede generar contención (todos actualizan la
-   misma fila de la vista). En un hotel con consultas de reportes es razonable.
- - IX_factura_fecha solo se justifica con consultas que filtren por rango de
-   fecha directamente en factura (la función). Con la vista sola no se usa para
-   seek: justifícalo con el plan o elimínalo.
- - Un índice de más cuesta espacio y escritura: si con las vistas indexadas un
-   índice de C1 deja de aparecer en los planes (revisa sys.dm_db_index_usage_stats),
-   puedes retirarlo.*/
 
---Reiniciar la prueba (volver al estado base). Descomenta y ejecuta:
+--Reiniciar la prueba (volver al estado base). 
 DROP FUNCTION IF EXISTS facturacion.fn_variacion_mensual_ingresos_hotel;
 DROP VIEW IF EXISTS facturacion.ivw_gasto_huesped;
 DROP VIEW IF EXISTS facturacion.ivw_monto_hotel_factura;
