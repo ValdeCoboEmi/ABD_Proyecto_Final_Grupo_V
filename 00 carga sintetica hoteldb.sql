@@ -2,27 +2,17 @@
 ===============================================================================
 HotelDB - Carga SINTÉTICA de volumen (solo para pruebas de rendimiento)
 -------------------------------------------------------------------------------
-POR QUÉ: hoy HotelDB tiene ~190 facturas y ~1,400 líneas de detalle, es decir,
-unas pocas decenas de páginas. Con ese tamaño un scan completo es lo más barato
-y ningún índice puede mostrar una mejora visible. Este script agrega facturas y
-líneas inventadas para que las lecturas lógicas se midan en miles de páginas.
+HotelDB cuenta con alrededor de 190 facturas y 1,400 líneas de detalle, siendo pocos datos.
+Con ese tamaño un scan completo es lo más barato y ningún índice puede mostrar una mejora
+visible. Este script agrega facturas y líneas inventadas para que las lecturas 
+lógicas muestren una mejora real dentro de la base.
 
-USO:
-  1) Ejecuta la sección 1 (marca) y la sección 2 (carga).
-  2) Ejecuta las pruebas BASE del script INDICES_..._v2.sql (antes de los índices).
-  3) Crea los índices, repite las pruebas y compara.
-  4) Al terminar, ejecuta la sección 3 (limpieza) para volver a los datos reales.
+COMO USAR:
+  1) Ejecutar la sección 1 (marca) y la sección 2 (carga).
+  2) Ejecutar las pruebas BASE del script (antes de los índices).
+  3) Crear los índices, repetir las pruebas y compara.
+  4) Al terminar, ejecutar la sección 3 de este script para volver a los datos reales.
 
-NOTAS:
-  - Los datos son inventados: sirven para medir rendimiento, no para reportes.
-  - Se deshabilitan los triggers de factura y detalle_factura durante la carga
-    (si no, recalcularían totales fila por fila) y se vuelven a habilitar al final.
-  - Reutiliza id_estadia, id_empleado, id_huesped, id_habitacion e id_servicio
-    ya existentes, así que las llaves foráneas se cumplen.
-  - No registres facturas reales mientras la carga esté activa: la limpieza
-    borra todo lo que tenga id_factura mayor al máximo original.
-  - Si usas sqlcmd, ejecútalo con la opción -I (QUOTED_IDENTIFIER ON); es
-    obligatorio cuando existen vistas indexadas o índices filtrados.
 ===============================================================================
 */
 USE HotelDB;
@@ -188,8 +178,6 @@ GO
 
 /* ===========================================================================
 3. LIMPIEZA: volver a los datos reales (ejecutar al terminar las pruebas)
-   Si ya creaste las vistas indexadas, el borrado también las mantiene al día
-   (por eso puede tardar más que la carga).
 =========================================================================== */
 
 SET NOCOUNT ON;
