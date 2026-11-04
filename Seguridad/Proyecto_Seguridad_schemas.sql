@@ -95,12 +95,12 @@ GRANT ALTER ON SCHEMA::reportes TO rol_programador;
 GRANT CREATE TABLE, CREATE VIEW, CREATE PROCEDURE, CREATE FUNCTION TO rol_programador;
 
 -- Manipulación select de datos (DML) sobre todos los esquemas
-GRANT SELECT ON SCHEMA::catalogo TO rol_programador;
-GRANT SELECT ON SCHEMA::operacion TO rol_programador;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::catalogo TO rol_programador;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::operacion TO rol_programador;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::calidad TO rol_programador;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::reportes TO rol_programador;
+-- Select unicamente en facturacion
 GRANT SELECT ON SCHEMA::facturacion TO rol_programador;
-GRANT SELECT ON SCHEMA::calidad TO rol_programador;
-GRANT SELECT ON SCHEMA::reportes TO rol_programador;
-
 
 -- Ejecución de rutinas y lógica de negocio
 GRANT EXECUTE ON SCHEMA::operacion TO rol_programador;
