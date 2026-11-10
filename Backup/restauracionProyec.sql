@@ -20,32 +20,31 @@ GO
 USE master;
 GO
 
----- 1. Si la base existe (incluso colgada en restoring), la borramos por completo
+---Si la base existela borramos por completo
 IF EXISTS (SELECT name FROM sys.databases WHERE name = N'HotelDB')
 BEGIN
     DROP DATABASE [HotelDB];
 END
 GO
 
--- 2. Restaurar el Respaldo Full (Completo) con NORECOVERY
+--Restaurar el Respaldo Full con NORECOVERY
 RESTORE DATABASE [HotelDB] 
-FROM DISK = N'/backup/HotelDB_Full_20261109_014956.bak'  -- (O usa el nombre dinámico generado ej: /backup/HotelDB_Full_20261104_XXXXXX.bak)
+FROM DISK = N'/backup/HotelDB_Full_20261109_014956.bak'
 WITH 
     REPLACE,         
     NORECOVERY,      
     STATS = 10;
 GO
 
--- 3. Restaurar el Respaldo Diferencial con NORECOVERY
+--Restaurar el Respaldo Diferencial con NORECOVERY
 RESTORE DATABASE [HotelDB] 
-FROM DISK = N'/backup/HotelDB_Diff_Diario.bak'   -- (O el archivo diferencial dinámico correspondiente)
+FROM DISK = N'/backup/HotelDB_Diff_Diario.bak' 
 WITH 
     NORECOVERY,      
     STATS = 10;
 GO
 
--- 4. Restaurar el Respaldo de Log en orden cronológico con NORECOVERY
--- *(Asegúrate de colocar el nombre exacto del archivo .trn que exista en tu carpeta)*
+--Restaurar el Respaldo de Log NORECOVERY
 RESTORE LOG [HotelDB] 
 FROM DISK = N'/backup/HotelDB_Log_15min.trn' 
 WITH 
@@ -53,15 +52,13 @@ WITH
     STATS = 10;
 GO
 
--- 5. Cierre de la cadena con RECOVERY (Pone la base en línea y usable)
 RESTORE LOG [HotelDB] WITH RECOVERY;
 GO
 
--- 6. Devolver la base de datos a modo multi-usuario
 ALTER DATABASE [HotelDB] SET MULTI_USER;
 GO
 
--- 7. Verificación final de datos restaurados e integridad
+--Verificación final de datos restaurados
 USE HotelDB;
 GO
 
