@@ -32,7 +32,7 @@ ALTER SERVER AUDIT Audit_Cenit_Servidor WITH (STATE = ON);
 GO
 
 -- 2. Crear la especificación de auditoría en la base de datos cenitDB
-USE cenitDB;
+USE HotelDB;
 GO
 
 IF EXISTS (SELECT * FROM sys.database_audit_specifications WHERE name = 'AuditSpec_Facturacion_Sensible')
@@ -58,11 +58,11 @@ USE master;
 GO
 
 -- 1. Asegurar que el dueño de la base de datos sea 'sa'
-ALTER AUTHORIZATION ON DATABASE::cenitDB TO sa;
+ALTER AUTHORIZATION ON DATABASE::HotelDB TO sa;
 GO
 
 -- 2. Habilitar la confianza en la base de datos para permitir la ejecución de módulos con EXECUTE AS
-ALTER DATABASE cenitDB SET TRUSTWORTHY ON;
+ALTER DATABASE HotelDB SET TRUSTWORTHY ON;
 GO
 
 --- =======================
@@ -86,6 +86,7 @@ SELECT
 FROM sys.fn_get_audit_file(N'/audit/Audit_Cenit/*.sqlaudit', DEFAULT, DEFAULT)
 ORDER BY event_time DESC;
 GO
+--------------------------
 
 EXECUTE AS USER = 'usr_Rodas_Rodriguez';
 

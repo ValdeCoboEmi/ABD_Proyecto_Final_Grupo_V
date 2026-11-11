@@ -1,5 +1,5 @@
 -- ==============================
-USE cenitDB;
+USE HotelDB;
 GO
 
 -- =========================
@@ -74,7 +74,7 @@ FROM sys.database_role_members rm
 INNER JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
 INNER JOIN sys.database_principals m ON rm.member_principal_id = m.principal_id
 WHERE m.name IN (
-'usr_Steven_Roque'
+'usr_Rodas_Rodriguez'
 )
 ORDER BY m.name, r.name;
 
@@ -108,9 +108,11 @@ SELECT TOP 2 * FROM operacion.huesped;
 -- Limpieza
 DROP TABLE catalogo.prueba_desarrollo;
 
--- [FALLO ESPERADO] Intentar borrar registros (DML no autorizado, solo tiene SELECT y ALTER)
--- Error: Msg 229 - The DELETE permission was denied on the object 'huesped'
-DELETE FROM operacion.huesped WHERE id_huesped = 1;
+-- [FALLO ESPERADO 2]: Intentar eliminar una factura
+-- Error: Msg 229, The DELETE permission was denied on the object 'factura'
+DELETE FROM facturacion.factura 
+WHERE id_factura = 1;
+GO
 
 REVERT;
 GO

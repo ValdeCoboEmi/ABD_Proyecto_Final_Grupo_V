@@ -29,7 +29,7 @@ GO
 
 --Restaurar el Respaldo Full con NORECOVERY
 RESTORE DATABASE [HotelDB] 
-FROM DISK = N'/backup/HotelDB_Full_20261109_014956.bak'
+FROM DISK = N'/backup/cenitDB-backup-30-09-2026.bak'
 WITH 
     REPLACE,         
     NORECOVERY,      
@@ -38,7 +38,7 @@ GO
 
 --Restaurar el Respaldo Diferencial con NORECOVERY
 RESTORE DATABASE [HotelDB] 
-FROM DISK = N'/backup/HotelDB_Diff_Diario.bak' 
+FROM DISK = N'/backup/HotelDB_Diff_20261110_023918.bak' 
 WITH 
     NORECOVERY,      
     STATS = 10;
@@ -46,7 +46,7 @@ GO
 
 --Restaurar el Respaldo de Log NORECOVERY
 RESTORE LOG [HotelDB] 
-FROM DISK = N'/backup/HotelDB_Log_15min.trn' 
+FROM DISK = N'/backup/HotelDB_Log_20261110_023919.trn' 
 WITH 
     NORECOVERY,      
     STATS = 10;

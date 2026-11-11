@@ -1,6 +1,6 @@
 restore filelistonly from disk='/backup/cenitDB-backup-30-09-2026.bak';
 
-RESTORE DATABASE cenitDB
+RESTORE DATABASE HotelDB
 FROM DISK = '/backup/cenitDB-backup-30-09-2026.bak'
 WITH
     MOVE 'HotelDB' TO '/var/opt/mssql/data/cenitDB-backup-30-09-2026.mdf',
@@ -9,7 +9,7 @@ WITH
     RECOVERY,
     STATS = 10;
 
-use cenitDB;
+use HotelDB;
 
 -- Visualizacion de schemas
 
@@ -39,7 +39,7 @@ SELECT name FROM sys.schemas
 WHERE name IN ('catalogo', 'operacion', 'facturacion', 'calidad', 'reportes');
 
 -- Nos paramos en la base de datos del hotel
-USE cenitDB;
+USE HotelDB;
 GO
 
 -- Con esta consulta revisamos las tablas y vistas que viven dentro de un esquema en específico
@@ -278,7 +278,7 @@ ORDER BY
 
 
     --- Verificacion 2
-    USE cenitDB;
+    USE HotelDB;
 GO
 
 SELECT 

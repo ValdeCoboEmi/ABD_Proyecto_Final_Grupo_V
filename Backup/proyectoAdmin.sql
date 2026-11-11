@@ -7,7 +7,7 @@ GO
 
 -- Restaurar el respaldo inicial
 RESTORE DATABASE HotelDB
-FROM DISK = '/backup/HotelDB_Full_Semanal.bak'
+FROM DISK = '/backup/cenitDB-backup-30-09-2026.bak' -- Semanal
 WITH RECOVERY, REPLACE, STATS = 10;
 GO
 
