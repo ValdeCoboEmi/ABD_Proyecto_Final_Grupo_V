@@ -61,6 +61,13 @@ Se optimizaron tres consultas de facturación, medidas con `SET STATISTICS IO ON
 
 Los planes de ejecución de cada consulta se analizan en el documento de análisis de planes.
 
+## Analítica y Dashboard (Power BI)
+
+El proyecto cuenta con un dashboard interactivo publicado en Power BI Service, alimentado directamente desde las 13 vistas de solo lectura del esquema `reportes`. Esto evita exponer las tablas transaccionales y asegura métricas consistentes sobre ocupación, ingresos mensuales y anuales, rendimiento por tipo de habitación, consumos de servicios y calificaciones promedio de los hoteles.
+
+- **Acceso al reporte en línea:** [Ver Dashboard de CÉNIT en Power BI](https://app.powerbi.com/links/y6S5bSxvgP?ctid=ff1cb486-d912-49e3-9434-122e9c45895e&pbi_source=linkShare)
+- **Archivo fuente:** disponible en la carpeta `powerbi/` (`.pbix`) para inspección local en Power BI Desktop.
+
 ## Respaldo y recuperación
 
 | Tipo | Job de SQL Server Agent | Frecuencia | Retención |
@@ -90,19 +97,6 @@ Los planes de ejecución de cada consulta se analizan en el documento de anális
 7. Conectar Power BI Desktop a `HotelDB` con un login de solo lectura y cargar las vistas del esquema `reportes`.
 
 > Los scripts de seguridad y auditoría hacen referencia a la misma base con el nombre `cenitDB`; el resto de los scripts usa `HotelDB`.
-
-## Estructura del repositorio
-
-Ajusta esta sección a las carpetas reales del repositorio.
-
-```
-.
-├── README.md
-├── docs/            # Documento técnico y análisis de planes de ejecución
-├── presentacion/    # Presentación de la defensa
-├── sql/             # Scripts: modelo, datos, seguridad, índices, respaldos
-└── powerbi/         # Dashboard (.pbix)
-```
 
 ## Documentación
 
